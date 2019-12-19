@@ -1249,13 +1249,8 @@ public class CallsManager extends Call.ListenerBase
                     CallState.CONNECTING,
                     phoneAccountHandle == null ? "no-handle" : phoneAccountHandle.toString());
 
-            boolean isVoicemail = (call.getHandle() != null)
-                    && (PhoneAccount.SCHEME_VOICEMAIL.equals(call.getHandle().getScheme())
-                    || (accountToUse != null && mPhoneAccountRegistrar.isVoiceMailNumber(
-                    accountToUse.getAccountHandle(), call.getHandle().getSchemeSpecificPart())));
-
-            if (!isVoicemail && (isRttSettingOn() || (extras != null
-                    && extras.getBoolean(TelecomManager.EXTRA_START_CALL_WITH_RTT, false)))) {
+            if (isRttSettingOn() || (extras != null
+                    && extras.getBoolean(TelecomManager.EXTRA_START_CALL_WITH_RTT, false))) {
                 Log.d(this, "Outgoing call requesting RTT, rtt setting is %b", isRttSettingOn());
                 if (accountToUse != null
                         && accountToUse.hasCapabilities(PhoneAccount.CAPABILITY_RTT)) {
@@ -1267,7 +1262,6 @@ public class CallsManager extends Call.ListenerBase
             }
         }
         setIntentExtrasAndStartTime(call, extras);
-        setCallSourceToAnalytics(call, originalIntent);
 
         if ((isPotentialMMICode(handle) || isPotentialInCallMMICode) && !needsAccountSelection) {
             // Do not add the call if it is a potential MMI code.
@@ -1839,15 +1833,8 @@ public class CallsManager extends Call.ListenerBase
                 Log.d("phoneAccountSelected: default to voip mode for call %s", call.getId());
                 call.setIsVoipAudioMode(true);
             }
-
-            boolean isVoicemail = (call.getHandle() != null)
-                    && (PhoneAccount.SCHEME_VOICEMAIL.equals(call.getHandle().getScheme())
-                    || (realPhoneAccount != null && mPhoneAccountRegistrar.isVoiceMailNumber(
-                    realPhoneAccount.getAccountHandle(),
-                    call.getHandle().getSchemeSpecificPart())));
-
-            if (!isVoicemail && (isRttSettingOn() || call.getIntentExtras()
-                    .getBoolean(TelecomManager.EXTRA_START_CALL_WITH_RTT, false))) {
+            if (isRttSettingOn() || call.getIntentExtras()
+                    .getBoolean(TelecomManager.EXTRA_START_CALL_WITH_RTT, false)) {
                 Log.d(this, "Outgoing call after account selection requesting RTT," +
                         " rtt setting is %b", isRttSettingOn());
                 if (realPhoneAccount != null
@@ -3428,18 +3415,6 @@ public class CallsManager extends Call.ListenerBase
               SystemClock.elapsedRealtime());
 
         call.setIntentExtras(extras);
-    }
-
-    private void setCallSourceToAnalytics(Call call, Intent originalIntent) {
-        if (originalIntent == null) {
-            return;
-        }
-
-        int callSource = originalIntent.getIntExtra(TelecomManager.EXTRA_CALL_SOURCE,
-                Analytics.CALL_SOURCE_UNSPECIFIED);
-
-        // Call source is only used by metrics, so we simply set it to Analytics directly.
-        call.getAnalytics().setCallSource(callSource);
     }
 
     /**
